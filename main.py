@@ -11,10 +11,7 @@ alerted_aircraft = {}
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": message
-    }
+    payload = {"chat_id": CHAT_ID, "text": message}
     try:
         response = requests.post(url, data=payload)
         response.raise_for_status()
@@ -53,7 +50,7 @@ def monitor_squawk():
             squawk = aircraft[14]
 
             if squawk and squawk != alerted_aircraft.get(icao24):
-                message = f"📡 Squawk değişimi tespit edildi:\✈️ ICAO: {icao24}\n📞 CallSign: {callsign.strip()}\n🔢 Squawk: {squawk}"
+                message = f"📡 Squawk değişimi tespit edildi:\n✈️ ICAO: {icao24}\n📞 CallSign: {callsign.strip()}\n🔢 Squawk: {squawk}"
                 print(message)
                 send_telegram_message(message)
                 alerted_aircraft[icao24] = squawk
