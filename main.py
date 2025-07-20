@@ -18,12 +18,16 @@ def send_telegram(message):
 
 def check_adsbexchange():
     url = "https://public-api.adsbexchange.com/VirtualRadar/AircraftList.json"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)"
+    }
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
     except Exception as e:
         print("ADS-B Exchange API hatası:", e)
+        print("Yanıt metni:", response.text)
         return
 
     aircraft_list = data.get("acList", [])
