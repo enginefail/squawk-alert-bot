@@ -2,8 +2,8 @@ import requests
 import time
 import os
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")
+BOT_TOKEN = os.environ.get("8051404880:AAGBmdENZAxJf8bVHQmT5mgLGHR0qEXjhYA")
+CHAT_ID = os.environ.get("925595845")
 
 ALERT_SQUAWKS = ['7500', '7600', '7700']
 TARGET_AIRLINE = "THY"
@@ -18,7 +18,7 @@ def check_squawk():
         print("Squawk kontrol ediliyor...")
         response = requests.get("https://opensky-network.org/api/states/all", timeout=10)
         data = response.json()
-        
+
         for flight in data.get("states", []):
             callsign = flight[1].strip() if flight[1] else ""
             squawk = flight[14] if len(flight) > 14 else None
@@ -30,7 +30,9 @@ def check_squawk():
     except Exception as e:
         print("Hata:", e)
 
+# Script başlarken test mesajı gönder
 send_telegram_alert("Test mesajı: Bot başarıyla çalışıyor!")
+
 
 while True:
     check_squawk()
