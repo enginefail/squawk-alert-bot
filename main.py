@@ -33,25 +33,18 @@ def check_adsbexchange():
     for aircraft in aircraft_list:
         callsign = aircraft.get("Call", "")
         squawk = aircraft.get("Sqk", "")
-        hex_id = aircraft.get("Icao", "")
         destination = aircraft.get("Dst", "")
+        hex_id = aircraft.get("Icao", "")
 
-        print(f"Callsign: {callsign}, Squawk: {squawk}, Destination: {destination}")
+        # Tüm uçak bilgilerini konsola yazalım
+        print(f"Callsign: {callsign}, Squawk: {squawk}, Destination: {destination}, ICAO: {hex_id}")
 
         if callsign.startswith("THY") and squawk == "7700":
-            if hex_id not in alerted_flights:
-                message = f"⚠️ THY Emergency detected!\nCallsign: {callsign}\nSquawk: {squawk}\nICAO: {hex_id}"
-                print(message)
-                send_telegram(message)
-                alerted_flights.add(hex_id)
+            message = f"⚠️ THY Emergency detected!\nCallsign: {callsign}\nSquawk: {squawk}\nICAO: {hex_id}"
+            print(message)
+            send_telegram(message)
 
         if destination == "IST":
             message = f"✈️ İstanbul'a iniş yapan uçuş:\nCallsign: {callsign}\nICAO: {hex_id}\nSquawk: {squawk}"
             print(message)
             send_telegram(message)
-
-if __name__ == "__main__":
-    send_telegram("✅ ADS-B Exchange bot başladı, test mesajı!")
-    while True:
-        check_adsbexchange()
-        time.sleep(60)
