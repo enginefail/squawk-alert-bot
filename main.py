@@ -18,9 +18,7 @@ def send_telegram(message):
 
 def check_adsbexchange():
     url = "https://public-api.adsbexchange.com/VirtualRadar/AircraftList.json"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)"
-    }
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)"}
     try:
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
@@ -31,18 +29,30 @@ def check_adsbexchange():
         return
 
     aircraft_list = data.get("acList", [])
+    print(f"Toplam uçak sayısı: {len(aircraft_list)}")
 
     for aircraft in aircraft_list:
         callsign = aircraft.get("Call", "")
         squawk = aircraft.get("Sqk", "")
         hex_id = aircraft.get("Icao", "")
+        destination = aircraft.get("Dst", "")
 
+        # Genel log
+        print(f"Callsign: {callsign}, Squawk: {squawk}, Destination: {destination}")
+
+        # THY ve emergency squawk 7700 bildirimi
         if callsign.startswith("THY") and squawk == "7700":
             if hex_id not in alerted_flights:
                 message = f"⚠️ THY Emergency detected!\nCallsign: {callsign}\nSquawk: {squawk}\nICAO: {hex_id}"
                 print(message)
                 send_telegram(message)
                 alerted_flights.add(hex_id)
+
+        # İstanbul'a inen uçuş bildirimi
+        if destination == "IST":
+            message = f"✈️ İstanbul'a iniş yapan uçuş:\nCallsign: {callsign}\nICAO: {hex_id}\nSquawk: {squawk}"
+            print(message)
+            send_telegram(message)
 
 if __name__ == "__main__":
     send_telegram("✅ ADS-B Exchange bot başladı, test mesajı!")
