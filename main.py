@@ -1,61 +1,47 @@
+import requests
 import os
 import time
-import requests
 
 BOT_TOKEN = os.environ.get("8051404880:AAGBmdENZAxJf8bVHQmT5mgLGHR0qEXjhYA")
 CHAT_ID = os.environ.get("925595845")
-OPENSKY_USER = os.environ.get("enginefail")
-OPENSKY_PASS = os.environ.get("Haci123..")
 
-alerted_aircraft = {}
+alerted_flights = set()
 
-def send_telegram_message(message):
+def send_telegram(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message}
+    data = {"chat_id": CHAT_ID, "text": message}
     try:
-        response = requests.post(url, data=payload)
-        response.raise_for_status()
+        resp = requests.post(url, data=data)
+        resp.raise_for_status()
     except Exception as e:
         print("Telegram gönderim hatası:", e)
 
-def fetch_opensky_data():
+def check_adsbexchange():
+    url = "https://public-api.adsbexchange.com/VirtualRadar/AircraftList.json"
     try:
-        response = requests.get(
-            "https://opensky-network.org/api/states/all",
-            auth=(OPENSKY_USER, OPENSKY_PASS),
-            timeout=10
-        )
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
-        try:
-            return response.json()
-        except ValueError:
-            print("Geçersiz JSON. Yanıt:", response.text)
-            return None
+        data = response.json()
     except Exception as e:
-        print("OpenSky bağlantı hatası:", e)
-        return None
+        print("ADS-B Exchange API hatası:", e)
+        return
 
-def monitor_squawk():
-    print("Takip başlatıldı...\n")
-    while True:
-        data = fetch_opensky_data()
-        if not data or "states" not in data or data["states"] is None:
-            print("Veri alınamadı veya boş. Bekleniyor...")
-            time.sleep(30)
-            continue
+    aircraft_list = data.get("acList", [])
 
-        for aircraft in data["states"]:
-            icao24 = aircraft[0]
-            callsign = aircraft[1] or "N/A"
-            squawk = aircraft[14]
+    for aircraft in aircraft_list:
+        callsign = aircraft.get("Call", "")
+        squawk = aircraft.get("Sqk", "")
+        hex_id = aircraft.get("Icao", "")
 
-            if squawk and squawk != alerted_aircraft.get(icao24):
-                message = f"📡 Squawk değişimi tespit edildi:\n✈️ ICAO: {icao24}\n📞 CallSign: {callsign.strip()}\n🔢 Squawk: {squawk}"
+        if callsign.startswith("THY") and squawk == "7700":
+            if hex_id not in alerted_flights:
+                message = f"⚠️ THY Emergency detected!\nCallsign: {callsign}\nSquawk: {squawk}\nICAO: {hex_id}"
                 print(message)
-                send_telegram_message(message)
-                alerted_aircraft[icao24] = squawk
-
-        time.sleep(30)
+                send_telegram(message)
+                alerted_flights.add(hex_id)
 
 if __name__ == "__main__":
-    monitor_squawk()
+    send_telegram("✅ ADS-B Exchange bot başladı, test mesajı!")
+    while True:
+        check_adsbexchange()
+        time.sleep(60)
